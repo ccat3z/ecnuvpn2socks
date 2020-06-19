@@ -1,5 +1,7 @@
 # shnuvpn2socks
 
+Convert SHNU VPN to socks5 server
+
 ## Introdouction
 
 Create tun/tap device in container and run a socks5 server.
