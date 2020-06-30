@@ -8,7 +8,7 @@ RUN sed -i "2s/^/#/" /etc/apt/sources.list && \
 
 # install deps
 RUN apt-get update && \
-    apt-get install -y net-tools curl zip && \
+    apt-get install -y net-tools curl zip psmisc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists
 
@@ -31,6 +31,9 @@ COPY --from=build-socks5 /socks5 /usr/local/bin/socks5
 
 ENV VPN_HOST vpn.shnu.edu.cn
 ENV VPN_PORT 443
+
+# install fake sudo
+COPY fake_sudo /usr/local/bin/sudo
 
 COPY start.sh /start.sh
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
