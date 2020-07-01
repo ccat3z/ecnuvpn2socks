@@ -1,7 +1,13 @@
 #! /bin/bash
 
+set -e
+
 faketty () {
     script -qfec "$(printf "%q " "$@")"
+}
+
+log () {
+    echo -e "\033[1m$(date "+%b %d %H:%M:%S") $*\033[0m" >&2
 }
 
 if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
@@ -11,11 +17,15 @@ fi
 
 function wait_vpn {
     while [ ! -f /etc/resolv.conf.array ]; do
-        echo "waiting vpn..." >&2
+        log "waiting vpn..."
         sleep 2s
     done
 
+    log "update resolve.conf"
     cat /etc/resolv.conf.array > /etc/resolv.conf
+
+    log "remove array temp files"
+    rm -v /etc/*.array
 }
 
 function reachable {
@@ -28,25 +38,27 @@ function reachable {
     fi
 }
 
-echo "start socks5 server" >&2
-socks5&
+log "start socks5 server"
+socks5 &> /var/log/socks5.log &
 
 cd /usr/local/share/motionpro/ || exit 1
 while :; do
-    echo "start vpn" >&2
+    log "start vpn"
 
-    faketty ./vpn_cmdline -h "$VPN_HOST" -o "$VPN_PORT" -u "$USERNAME" -p "$PASSWORD" &
-    VPN_PID=$!
+    (
+        wait_vpn
 
-    wait_vpn
-    echo "vpn is ready!" >&2
+        log "vpn is ready! start health checker"
+        while reachable http://g.cn/generate_204; do
+            sleep 30s
+        done
 
-    while reachable http://g.cn/generate_204; do
-        sleep 30s
-    done
+        log "cannot connect to internet. killing vpn process"
+        ./vpn_cmdline -s
+    )&
+    DAEMON_PID=$!
 
-    echo "killing vpn" >&2
-    ./vpn_cmdline -s
-    wait "${VPN_PID}"
-    echo "vpn stopped" >&2
+    faketty ./vpn_cmdline -h "$VPN_HOST" -o "$VPN_PORT" -u "$USERNAME" -p "$PASSWORD"
+    kill "$DAEMON_PID" &> /dev/null || true
+    log "vpn stopped"
 done
