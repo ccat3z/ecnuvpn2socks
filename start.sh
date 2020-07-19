@@ -29,13 +29,21 @@ function wait_vpn {
 }
 
 function reachable {
-    http_code="$(curl --connect-timeout 15 -m 15 -o /dev/null -w "%{http_code}" "$1" 2> /dev/null)"
+    max_attempt=3
+    attempt=1
+    while [ "$attempt" -le "$max_attempt" ]; do
+        log "try to connect $1 ($attempt/$max_attempt)"
+        http_code="$(curl --connect-timeout 10 -m 10 -o /dev/null -w "%{http_code}" "$1" 2> /dev/null)"
 
-    if [ "$http_code" = 204 ]; then
-        true
-    else
-        false
-    fi
+        if [ "$http_code" = 204 ]; then
+            log "success"
+            return 0
+        fi
+
+        attempt=$((attempt + 1))
+    done
+    log "failed"
+    return 1
 }
 
 log "start socks5 server"
