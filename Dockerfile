@@ -1,4 +1,4 @@
-FROM serjs/go-socks5-proxy as build-socks5
+# FROM go:1.15 as build-controller
 
 FROM debian:9
 
@@ -20,21 +20,13 @@ RUN curl -Lo /tmp/motionpro.zip "$MOTIONPRO_STANDALONE_URL" && \
     unzip /tmp/motionpro.zip && \
     rm /tmp/motionpro.zip
 
-# install dumb-init
-ENV DUMB_INIT_URL https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64.deb
-RUN curl -Lo /tmp/dumb-init.deb "$DUMB_INIT_URL" && \
-    dpkg -i /tmp/dumb-init.deb && \
-    rm /tmp/dumb-init.deb
-
-# install socks5 server
-COPY --from=build-socks5 /socks5 /usr/local/bin/socks5
-
-ENV VPN_HOST vpn.shnu.edu.cn
-ENV VPN_PORT 443
+ENV TZ Asia/Shanghai
 
 # install fake sudo
 COPY fake_sudo /usr/local/bin/sudo
 
-COPY start.sh /start.sh
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/start.sh"]
+# install controller
+# COPY --from=build-controller /controller /usr/local/bin/controller
+COPY /controller /controller
+
+ENTRYPOINT ["/controller"]

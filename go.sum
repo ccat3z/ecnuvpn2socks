@@ -1,0 +1,12 @@
+github.com/creack/pty v1.1.11 h1:07n33Z8lZxZ2qwegKbObQohDhXDQxiMMz1NOUGYlesw=
+github.com/creack/pty v1.1.11/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
+github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
+github.com/txthinking/runnergroup v0.0.0-20200327135940-540a793bb997 h1:vlDgnShahmE2XLslpr0hnzxfAmSj3JLX2CYi8Xct7G4=
+github.com/txthinking/runnergroup v0.0.0-20200327135940-540a793bb997/go.mod h1:CLUSJbazqETbaR+i0YAhXBICV9TrKH93pziccMhmhpM=
+github.com/txthinking/socks5 v0.0.0-20200811154444-70230f68ccaf h1:vq1H3oJ8ZqJ08CCj7J99jeYREWQ7562RtkhYqPxVwdA=
+github.com/txthinking/socks5 v0.0.0-20200811154444-70230f68ccaf/go.mod h1:d3n8NJ6QMRb6I/WAlp4z5ZPAoaeqDmX5NgVZA0mhe+I=
+github.com/txthinking/x v0.0.0-20200813135806-2c9a7191ffb3 h1:fQwTTkLx43PWOxp2V1DsFvH04/hxBmJyzejOImEjExM=
+github.com/txthinking/x v0.0.0-20200813135806-2c9a7191ffb3/go.mod h1:WgqbSEmUYSjEV3B1qmee/PpP2NYEz4bL9/+mF1ma+s4=
+golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f h1:Fqb3ao1hUmOR3GkUOg/Y+BadLwykBIzs5q8Ez2SbHyc=
+golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

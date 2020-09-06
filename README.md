@@ -15,16 +15,14 @@ Create tun/tap device in container and run a socks5 server.
 
 ## Usage
 
+``` sh
+make docker-image
+docker run \
+  --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun \
+  -p 127.0.0.1:8289:8289/tcp -p 127.0.0.1:8289:8289/udp \
+  shnuvpn2socks \
+  -vpn-username name \
+  -vpn-password pass \
+  -socks-port 1080 \
+  -ip 127.0.0.1
 ```
-docker run --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun --port 1080:1080 $image
-```
-
-### Enviroments
-
-* VPN config
-  * `USERNAME`
-  * `PASSWORD`
-* SOCKS5 config
-  * `PROXY_USER`
-  * `PROXY_PASSWORD`
-  * `PROXY_PORT`
