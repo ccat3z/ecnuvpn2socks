@@ -16,7 +16,7 @@ var socksPassword = flag.String("socks-password", "", "password of socks account
 func RunSocksServer() error {
 	log.Printf("start socks server on :%v", *socksPort)
 	addr := fmt.Sprintf("0.0.0.0:%v", *socksPort)
-	s, err := socks5.NewClassicServer(addr, *ip, *socksUsername, *socksPassword, 0, 60)
+	s, err := socks5.NewClassicServer(addr, *ip, *socksUsername, *socksPassword, 0, 120)
 	if err != nil {
 		return err
 	}
