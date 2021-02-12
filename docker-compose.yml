@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  shnuvpn2socks:
+    container_name: shnu-socks
+    image: shnuvpn2socks
+    ports:
+      - 127.0.0.1:${SOCKS5_PORT}:8289/tcp
+      - 127.0.0.1:${SOCKS5_PORT}:8289/udp
+    cap_add: [NET_ADMIN]
+    devices: 
+      - /dev/net/tun:/dev/net/tun
+    command: |-
+      -vpn-username ${VPN_USER}
+      -vpn-password ${VPN_PASS}
+      -socks-port 8289
+      -ip 127.0.0.1
+    network_mode: bridge
