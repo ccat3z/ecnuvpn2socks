@@ -2,10 +2,6 @@
 
 FROM debian:9
 
-# debian cn mirror
-RUN sed -i "2s/^/#/" /etc/apt/sources.list && \
-    sed -i "s/deb.debian.org/ftp2.cn.debian.org/g" /etc/apt/sources.list
-
 # install deps
 RUN apt-get update && \
     apt-get install -y net-tools curl zip psmisc && \
