@@ -2,8 +2,16 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"time"
+)
+
+var (
+	prepareTimeout = 30 * time.Second
+	// TODO: immediateFailureThresholdSecond should greater than prepareTimeout
+	immediateFailureThresholdSecond = flag.Int("fail-threshold", 60, "Threshold of immediate failure time in second")
+	maxFailureTime                  = flag.Int("max-try", 3, "Maximum attempts of reconnect")
 )
 
 func main() {
@@ -15,6 +23,9 @@ func main() {
 		}
 	}()
 
+	lastFail := time.Unix(0, 0)
+	failTimes := 0
+
 	ctx := context.Background()
 	for {
 		err := runMotionPro(ctx)
@@ -22,6 +33,18 @@ func main() {
 			log.Printf("Motion Pro exited with error: %v", err.Error())
 		} else {
 			log.Print("Motion Pro exited")
+		}
+
+		if time.Now().Sub(lastFail) < time.Duration(*immediateFailureThresholdSecond)*time.Second {
+			failTimes++
+		} else {
+			failTimes = 1
+		}
+		lastFail = time.Now()
+
+		if failTimes >= maxRetry {
+			log.Printf("Max retry reached (%v)", failTimes)
+			break
 		}
 
 		time.Sleep(2 * time.Second)
