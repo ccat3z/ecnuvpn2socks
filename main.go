@@ -15,39 +15,44 @@ func main() {
 		}
 	}()
 
+	ctx := context.Background()
 	for {
-		err := RunMotionProWithHelper(context.Background())
+		err := runMotionPro(ctx)
 		if err != nil {
-			panic(err)
+			log.Printf("Motion Pro exited with error: %v", err.Error())
+		} else {
+			log.Print("Motion Pro exited")
 		}
+
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func RunMotionProWithHelper(ctx context.Context) error {
-	r := make(chan struct{})
+func runMotionPro(ctx context.Context) error {
+	motionCtx, cancelMotion := context.WithCancel(ctx)
+	defer cancelMotion()
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	unhealthMonCtx, cancelUnhealthMon := context.WithCancel(ctx)
+	defer cancelUnhealthMon()
+
+	err := StartMotionPro(motionCtx, time.Second*30)
+	defer WaitMotionPro()
+	if err != nil {
+		return err
+	}
 
 	go func() {
-		select {
-		case <-r:
-			err := WaitUnhealth(ctx)
-
+		log.Print("Start health montor")
+		err := WaitUnhealth(unhealthMonCtx)
+		if err != nil {
 			if err == context.Canceled {
 				return
 			}
-
-			if err != nil {
-				panic(err)
-			}
-
-			log.Print("cannot connect to internet")
-			KillMotionPro()
-		case <-ctx.Done():
+			panic(err) // unexcept error
 		}
+		log.Print("Cannot connect to internet")
+		cancelMotion()
 	}()
 
-	return RunMotionPro(r)
+	return nil
 }

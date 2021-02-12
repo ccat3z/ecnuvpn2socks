@@ -18,6 +18,7 @@ func init() {
 	http.DefaultClient.Timeout = 10 * time.Second
 }
 
+// IsHealth check if we can access Internet
 func IsHealth() bool {
 	for i := 1; i <= maxRetry; i++ {
 		log.Printf("check health (%v/%v)", i, maxRetry)
@@ -30,6 +31,7 @@ func IsHealth() bool {
 	return false
 }
 
+// Reachable check if we can reach the http url
 func Reachable(url string, status int) bool {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -38,11 +40,12 @@ func Reachable(url string, status int) bool {
 	return resp.StatusCode == status
 }
 
+// WaitUnhealth will block until Internet is unaccessable
 func WaitUnhealth(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return context.Canceled
+			return ctx.Err()
 		case <-time.NewTimer(testInterval).C:
 		}
 

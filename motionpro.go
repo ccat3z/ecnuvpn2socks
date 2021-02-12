@@ -35,71 +35,95 @@ func init() {
 	}
 }
 
-var motionProIO *os.File = nil
+var motionProLock sync.Mutex
 
-func RunMotionPro(ready chan<- struct{}) error {
-	defer close(ready)
+// StartMotionPro start motion pro client in subprocess,
+// and wait motion pro ready. Then do some extract operation to make vpn work.
+func StartMotionPro(ctx context.Context, timeout time.Duration) (err error) {
+	motionProLock.Lock()
+	log.Print("Starting Motion Pro")
 
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
+	// build pty bash process
 	c := exec.Command("bash")
 	f, err := pty.Start(c)
-
-	motionProIO = f
-	defer func() {
-		motionProIO = nil
-	}()
-
 	if err != nil {
-		return err
-	}
-
-	// write commands into bash
-	go func() {
-		wg.Add(1)
-		defer wg.Done()
-		f.WriteString("export PS1='# '\n")
-		f.WriteString("rm -v /etc/*.array\n")
-		f.WriteString(fmt.Sprintf("cd '%v' || exit 1\n", *motionProLib))
-		f.WriteString(fmt.Sprintf("./vpn_cmdline -h '%v' -o '%v' -u '%v' -p '%v'; exit\n", *vpnHost, *vpnPort, *username, *password))
-	}()
-
-	// wait motion pro ready
-	waitingCtx, cancelWait := context.WithCancel(context.Background())
-	defer cancelWait()
-	go func() {
-		wg.Add(1)
-		defer wg.Done()
-		err := waitMotionProReady(waitingCtx)
-		if err == context.Canceled {
-			return
-		}
-		if err != nil {
-			panic(err)
-		}
-		ready <- struct{}{}
-	}()
-
-	// redirect bash output
-	io.Copy(os.Stdout, f)
-
-	log.Print("waiting motion pro stop")
-	c.Wait()
-	log.Print("motion pro is stopped")
-	return nil
-}
-
-func KillMotionPro() {
-	log.Print("killing motion pro")
-	if motionProIO == nil {
-		log.Print("no running motion pro")
 		return
 	}
 
-	motionProIO.Write([]byte{3})
-	motionProIO.WriteString("exit\n")
-	motionProIO.Write([]byte{4})
+	kill := func() {
+		if c.ProcessState != nil {
+			return
+		}
+
+		log.Print("Killing motion pro")
+		f.Write([]byte{3})
+		f.WriteString("exit\n")
+		f.Write([]byte{4})
+	}
+
+	// redirect cmd output
+	go io.Copy(os.Stdout, f)
+
+	cmdExited := make(chan struct{})
+
+	// release resources after cmd finished
+	go func() {
+		c.Wait()
+		close(cmdExited)
+		motionProLock.Unlock()
+		log.Print("Motion Pro was stopped")
+	}()
+
+	// gracefully kill cmd when ctx done
+	go func() {
+		select {
+		case <-cmdExited:
+			break
+		case <-ctx.Done():
+			kill()
+		}
+	}()
+
+	// kill cmd if prepare failed
+	defer func() {
+		if err != nil {
+			kill()
+		}
+	}()
+
+	// prepare operations
+	prepareCtx, cancelPrepare := context.WithCancel(context.Background())
+	defer cancelPrepare()
+	go func() {
+		<-cmdExited
+		cancelPrepare()
+	}()
+
+	// send commands into bash
+	f.WriteString("export PS1='# '\n")
+	f.WriteString("rm -v /etc/*.array\n")
+	f.WriteString(fmt.Sprintf("cd '%v' || exit 1\n", *motionProLib))
+	f.WriteString(fmt.Sprintf("./vpn_cmdline -h '%v' -o '%v' -u '%v' -p '%v'; exit\n", *vpnHost, *vpnPort, *username, *password))
+
+	err = waitMotionProReady(prepareCtx)
+	if err != nil {
+		err = fmt.Errorf("Failed to start motion pro > %w", err)
+		return
+	}
+
+	err = fixSystemConfigAfterMotionProStarted()
+	if err != nil {
+		return
+	}
+
+	return nil
+}
+
+// WaitMotionPro wait current motion pro instance exit.
+// If no motion pro is running, it will return immedately.
+func WaitMotionPro() {
+	motionProLock.Lock()
+	motionProLock.Unlock()
 }
 
 func waitMotionProReady(ctx context.Context) error {
@@ -108,7 +132,7 @@ func waitMotionProReady(ctx context.Context) error {
 
 		select {
 		case <-ctx.Done():
-			return context.Canceled
+			return ctx.Err()
 		case <-time.NewTimer(2 * time.Second).C:
 		}
 
@@ -122,16 +146,22 @@ func waitMotionProReady(ctx context.Context) error {
 		}
 	}
 
+	log.Println("motionpro ready!")
+	return nil
+}
+
+func fixSystemConfigAfterMotionProStarted() error {
+	log.Println("fix resolv.conf")
+
 	resolv, err := ioutil.ReadFile("/etc/resolv.conf.array")
 	if err != nil {
 		return err
 	}
+
 	err = ioutil.WriteFile("/etc/resolv.conf", resolv, 0644)
 	if err != nil {
 		return err
 	}
-
-	log.Println("motionpro ready!")
 
 	return nil
 }
