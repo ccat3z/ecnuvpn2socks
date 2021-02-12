@@ -84,6 +84,8 @@ func RunMotionPro(ready chan<- struct{}) error {
 	// redirect bash output
 	io.Copy(os.Stdout, f)
 
+	log.Print("waiting motion pro stop")
+	c.Wait()
 	log.Print("motion pro is stopped")
 	return nil
 }
