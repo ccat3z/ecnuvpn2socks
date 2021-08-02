@@ -14,6 +14,7 @@ docker run \
   -vpn-password pass \
   -socks-port 1080 \
   -ip 127.0.0.1
+# Or use docker-compose. Don't forget to set the environment variables required by docker-compose.yml.
 ```
 
 ### Flags
