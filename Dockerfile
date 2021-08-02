@@ -4,22 +4,12 @@ FROM debian:9
 
 # install deps
 RUN apt-get update && \
-    apt-get install -y net-tools curl zip psmisc && \
+    apt-get install -y openconnect && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists
 
 # install motionpro
-ENV MOTIONPRO_STANDALONE_URL https://support.arraynetworks.net/prx/001/http/supportportal.arraynetworks.net/downloads/pkg_9_4_0_253/vpn_cmdline_linux64_v1.0.54.zip
-RUN curl -Lo /tmp/motionpro.zip "$MOTIONPRO_STANDALONE_URL" && \
-    mkdir -p /usr/local/share/motionpro && \
-    cd /usr/local/share/motionpro && \
-    unzip /tmp/motionpro.zip && \
-    rm /tmp/motionpro.zip
-
 ENV TZ Asia/Shanghai
-
-# install fake sudo
-COPY fake_sudo /usr/local/bin/sudo
 
 # install controller
 # COPY --from=build-controller /controller /usr/local/bin/controller

@@ -1,4 +1,4 @@
-IMAGE_NAME=shnuvpn2socks
+IMAGE_NAME=ecnuvpn2socks
 DOCKER=docker
 GO=go
 
