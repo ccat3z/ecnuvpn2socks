@@ -34,7 +34,7 @@ func init() {
 func StartVPN(ctx context.Context) (err error) {
 	// Start openconnect
 	log.Print("Exec openconnect")
-	c := exec.Command("openconnect", "-u", *username, "--passwd-on-stdin", *vpnHost)
+	c := exec.Command("openconnect", "-u", *username, "--passwd-on-stdin", "--useragent", "AnyConnect/4.10", "--authgroup=ECNU", *vpnHost)
 	f, err := pty.Start(c)
 	if err != nil {
 		return

@@ -1,6 +1,6 @@
 # FROM go:1.15 as build-controller
 
-FROM debian:9
+FROM debian:12
 
 # install deps
 RUN apt-get update && \
